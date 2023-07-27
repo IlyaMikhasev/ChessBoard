@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -29,12 +30,15 @@ namespace ChessBoard
         Graphics g;
         Rectangle cell;
         static Point moveStart = new Point(0,0), moveEnd;
+        Form form;
+
+        ComboBox comboBox = new ComboBox();
         public Form1()
         {
             InitializeComponent();
         }
         private void createForm() {
-            Form form = new Form();
+            form = new Form();
             form.Size = new Size(_widthMap, _heigthMap);
             form.FormBorderStyle = FormBorderStyle.FixedSingle;
             form.Paint += paint_chessBoard;
@@ -43,36 +47,81 @@ namespace ChessBoard
             
         }
         private void moveChess(object sender, MouseEventArgs e) {
-            if (moveStart != new Point(0, 0))
+            if (e.Button == MouseButtons.Left)
             {
-                moveEnd = e.Location;
-                PrintMoveChess();
-                moveStart = new Point(0, 0);
+                if (moveStart != new Point(0, 0))
+                {
+                    moveEnd = e.Location;
+                    PrintMoveChess();
+                    moveStart = new Point(0, 0);
+                }
+                else
+                    moveStart = e.Location;
             }
-            else
-                moveStart = e.Location;
+            else { AddFigure(e.Location); }
         }
-        private string searchingCellToClick(Point loc) {
+        private void AddFigure(Point mouse) {
+            comboBox.Location = new Point(mouse.X,mouse.Y);
+            string[] figures = { "черный квадрат", "белый круг" };
+            comboBox.Items.AddRange(figures);
+            comboBox.Size = new Size(90, 23);
+            comboBox.Visible = true;
+            comboBox.SelectedValueChanged += printfigure;
+            form.Controls.Add(comboBox);
+           
+           
+        }
+        private void printfigure(object sender, EventArgs e) {
+            Point mouse = new Point(((ComboBox)sender).Location.X, ((ComboBox)sender).Location.Y);
+            searchingCellToClick(ref mouse);
+            Rectangle Fi_rect = new Rectangle(mouse.X+5,mouse.Y+5,_sizeCeel-10, _sizeCeel-10);
+            switch (comboBox.SelectedItem)
+            {
+                case "черный квадрат": printRectangle(Fi_rect); break;
+                case "белый круг": printElipse(Fi_rect); break;
+                default: break;
+            }
+        }
+        private void printElipse(Rectangle rectangle) {
+            comboBox.Items.Clear();
+            form.Controls.Remove(comboBox);
+            g = form.CreateGraphics();
+            g.FillEllipse(Brushes.White, rectangle);
+        }
+        private void printRectangle( Rectangle rectangle)
+        {
+            comboBox.Items.Clear();
+            form.Controls.Remove(comboBox);
+            g = form.CreateGraphics();
+            g.FillRectangle(Brushes.Black, rectangle);
+        }
+
+        private string searchingCellToClick(ref Point loc) {
             string locationW = string.Empty, locationH = string.Empty;
             ABC aBC = new ABC();
             int numeric = 1;
             for (int i = border; i < _heigthMap-border; i += _sizeCeel)
-            {                
+            {
                 for (int j = border; j < _widthMap - border; j += _sizeCeel)
-                {                    
-                    if(loc.X>=j && loc.X < j+_sizeCeel)
-                        locationW = aBC.ToString();
+                {
+                    if (loc.X >= j && loc.X < j + _sizeCeel) { 
+                    locationW = aBC.ToString();
+                    loc.X = j;
+                    }
                     aBC++;
                 }
                 aBC = ABC.A;
-                if(loc.Y>=i && loc.Y<i+_sizeCeel)
+                if (loc.Y >= i && loc.Y < i + _sizeCeel)
+                {
                     locationH = numeric.ToString();
+                    loc.Y = i;
+                }
                 numeric++;
             }
             return locationW + locationH;
         }
         private void PrintMoveChess() {
-            label1.Text = searchingCellToClick(moveStart)+" - "+ searchingCellToClick(moveEnd);
+            label1.Text = "Ход: "+searchingCellToClick(ref moveStart)+" - "+ searchingCellToClick( ref moveEnd);
         }
         private void paint_chessBoard(object sender, PaintEventArgs e) {
             g = e.Graphics;
