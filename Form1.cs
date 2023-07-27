@@ -44,7 +44,6 @@ namespace ChessBoard
             form.Paint += paint_chessBoard;
             form.MouseClick += moveChess;
             form.ShowDialog();
-            
         }
         private void moveChess(object sender, MouseEventArgs e) {
             if (e.Button == MouseButtons.Left)
@@ -152,6 +151,7 @@ namespace ChessBoard
         }
         private void b_board_Click(object sender, EventArgs e)
         {
+            MessageBox.Show("Левая клавиша мыши - сделать ход\nправая клавиша мыши - добавить фигуру");
             createForm();   
         }
     }
